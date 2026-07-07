@@ -6,7 +6,7 @@ Windows, WPF, fully offline.
 
 ## Setup
 
-1. Install the .NET 8 SDK.
+1. Install the .NET 10 SDK.
 2. Fetch ffmpeg (one time): `powershell -ExecutionPolicy Bypass -File scripts/setup-ffmpeg.ps1`
 3. Run: `dotnet run --project src/WeaveSyncLens.App`
 
