@@ -1,0 +1,92 @@
+<Window x:Class="WeaveSyncLens.App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:WeaveSyncLens.App.ViewModels"
+        xmlns:controls="clr-namespace:WeaveSyncLens.App.Controls"
+        Title="WeaveSyncLens" Height="720" Width="1280"
+        Background="#FF101014" AllowDrop="True"
+        Drop="Window_Drop" DragOver="Window_DragOver"
+        KeyDown="Window_KeyDown" Closing="Window_Closing">
+    <Window.DataContext>
+        <vm:MainViewModel />
+    </Window.DataContext>
+    <Grid x:Name="RootGrid">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="3*" />   <!-- transcript -->
+            <RowDefinition Height="1*" />   <!-- visualizer -->
+            <RowDefinition Height="Auto" /> <!-- transport -->
+        </Grid.RowDefinitions>
+
+        <!-- Transcript area -->
+        <Border x:Name="TranscriptHost" Grid.Row="0" HorizontalAlignment="Center">
+            <Grid>
+                <controls:KaraokeView x:Name="Karaoke" MinWidth="600"
+                                      WordsSource="{Binding Words}"
+                                      ActiveIndex="{Binding ActiveWordIndex}"
+                                      SeekCommand="{Binding SeekToWordCommand}" />
+                <TextBlock Text="{Binding StatusText}" Foreground="#FF808090" FontSize="24"
+                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                           IsHitTestVisible="False">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsMediaLoaded}" Value="False">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+            </Grid>
+        </Border>
+
+        <!-- Visualizer area -->
+        <Border x:Name="VisualizerHostArea" Grid.Row="1" Background="#FF0B0B0E">
+            <controls:VisualizerHost x:Name="Visualizer" />
+        </Border>
+
+        <!-- Transport controls -->
+        <DockPanel x:Name="TransportBar" Grid.Row="2" Background="#FF18181E" LastChildFill="True">
+            <Button Content="Open" Command="{Binding OpenFileCommand}" Margin="8" Padding="12,4" />
+            <Button Margin="0,8,8,8" Padding="12,4"
+                    Command="{Binding TogglePlayPauseCommand}">
+                <Button.Style>
+                    <Style TargetType="Button">
+                        <Setter Property="Content" Value="Play" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsPlaying}" Value="True">
+                                <Setter Property="Content" Value="Pause" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
+            <Button Content="⛶" FontSize="16" Margin="0,8,8,8" Padding="10,2"
+                    ToolTip="Fullscreen (F11)" Click="Fullscreen_Click" />
+            <ComboBox ItemsSource="{Binding ModelSizes}" SelectedItem="{Binding SelectedModelSize}"
+                      Margin="0,8,8,8" VerticalAlignment="Center" MinWidth="90"
+                      ToolTip="Whisper model (bigger = more accurate, slower). Used on next transcription." />
+            <TextBlock DockPanel.Dock="Right" Margin="8" VerticalAlignment="Center" Foreground="White">
+                <Run Text="{Binding PositionSeconds, StringFormat={}{0:0}s, Mode=OneWay}" />
+                <Run Text=" / " />
+                <Run Text="{Binding DurationSeconds, StringFormat={}{0:0}s, Mode=OneWay}" />
+            </TextBlock>
+            <Slider x:Name="SeekSlider" VerticalAlignment="Center" Margin="8,0"
+                    Maximum="{Binding DurationSeconds}"
+                    ValueChanged="SeekSlider_ValueChanged"
+                    Thumb.DragStarted="SeekSlider_DragStarted"
+                    Thumb.DragCompleted="SeekSlider_DragCompleted" />
+        </DockPanel>
+
+        <!-- Busy overlay -->
+        <Grid Grid.RowSpan="3" Background="#CC101014"
+              Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Width="420">
+                <TextBlock Text="{Binding StatusText}" Foreground="White" FontSize="20"
+                           TextAlignment="Center" Margin="0,0,0,16" />
+                <ProgressBar Height="10" Minimum="0" Maximum="1" Value="{Binding BusyFraction, Mode=OneWay}" />
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Window>

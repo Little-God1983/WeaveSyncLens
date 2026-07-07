@@ -1,0 +1,36 @@
+<UserControl x:Class="WeaveSyncLens.App.Controls.KaraokeView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Name="Root">
+    <ScrollViewer x:Name="Scroller" VerticalScrollBarVisibility="Hidden"
+                  HorizontalScrollBarVisibility="Disabled" Focusable="False">
+        <ItemsControl x:Name="WordsHost"
+                      ItemsSource="{Binding WordsSource, ElementName=Root}"
+                      Margin="24,120">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <WrapPanel Orientation="Horizontal" />
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding Text}" Margin="0,2,14,2"
+                               FontSize="{Binding WordFontSize, ElementName=Root}"
+                               FontWeight="SemiBold" Cursor="Hand"
+                               MouseLeftButtonDown="Word_MouseLeftButtonDown">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="#FF6A6A78" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                        <Setter Property="Foreground" Value="#FFFFD34D" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+    </ScrollViewer>
+</UserControl>
