@@ -1,6 +1,35 @@
-bin/
-obj/
+# Build results
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+publish/
+
+# Visual Studio / Rider / VS Code
+.vs/
+.idea/
+.vscode/
 *.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.DotSettings.user
+
+# Test results
+TestResults/
+[Tt]est[Rr]esult*/
+
+# NuGet
+*.nupkg
+packages/
+
+# OS cruft
+Thumbs.db
+.DS_Store
+
+# Project-specific: bundled/downloaded assets, never committed
 third_party/ffmpeg/
 /models/
-.vs/
+
+# Dev-session scratch (task briefs, review diffs from AI-assisted dev tooling)
+.superpowers/
