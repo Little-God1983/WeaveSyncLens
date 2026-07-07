@@ -62,6 +62,8 @@
                     </Style>
                 </Button.Style>
             </Button>
+            <Button Content="⛶" FontSize="16" Margin="0,8,8,8" Padding="10,2"
+                    ToolTip="Fullscreen (F11)" Click="Fullscreen_Click" />
             <TextBlock DockPanel.Dock="Right" Margin="8" VerticalAlignment="Center" Foreground="White">
                 <Run Text="{Binding PositionSeconds, StringFormat={}{0:0}s, Mode=OneWay}" />
                 <Run Text=" / " />
