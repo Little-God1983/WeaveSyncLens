@@ -18,6 +18,7 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        Visualizer.Attach(Vm.Playback);
         Vm.PropertyChanged += Vm_PropertyChanged;
 
         SizeChanged += (_, _) => UpdateTranscriptScaling();

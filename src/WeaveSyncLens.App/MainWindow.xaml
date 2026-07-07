@@ -41,8 +41,10 @@
             </Grid>
         </Border>
 
-        <!-- Visualizer area: placeholder until Task 11 -->
-        <Border x:Name="VisualizerHostArea" Grid.Row="1" Background="#FF0B0B0E" />
+        <!-- Visualizer area -->
+        <Border x:Name="VisualizerHostArea" Grid.Row="1" Background="#FF0B0B0E">
+            <controls:VisualizerHost x:Name="Visualizer" />
+        </Border>
 
         <!-- Transport controls -->
         <DockPanel x:Name="TransportBar" Grid.Row="2" Background="#FF18181E" LastChildFill="True">
