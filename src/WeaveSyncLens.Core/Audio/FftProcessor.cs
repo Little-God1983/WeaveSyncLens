@@ -28,6 +28,9 @@ public class FftProcessor
             _hannCoefficients[i] = (float)FastFourierTransform.HannWindow(i, fftLength);
     }
 
+    /// <summary>Discards any partially accumulated samples (call when switching tracks).</summary>
+    public void Reset() => _pos = 0;
+
     public void AddSamples(float[] buffer, int offset, int count, int channels)
     {
         for (int i = 0; i + channels <= count; i += channels)

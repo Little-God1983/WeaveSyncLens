@@ -7,6 +7,7 @@ public class PlaybackEngine : IDisposable
 {
     private WaveStream? _reader;
     private WaveOutEvent? _output;
+    private EventHandler<StoppedEventArgs>? _stoppedHandler;
 
     public FftProcessor Fft { get; } = new(fftLength: 2048);
 
@@ -20,6 +21,7 @@ public class PlaybackEngine : IDisposable
     public void Load(string mediaPath)
     {
         Unload();
+        Fft.Reset(); // discard partial samples from the previous track
         _reader = Path.GetExtension(mediaPath).ToLowerInvariant() switch
         {
             ".mp3" or ".wav" => new AudioFileReader(mediaPath),
@@ -30,7 +32,8 @@ public class PlaybackEngine : IDisposable
             (buf, off, cnt, ch) => Fft.AddSamples(buf, off, cnt, ch));
         _output = new WaveOutEvent { DesiredLatency = 150 };
         _output.Init(tap);
-        _output.PlaybackStopped += (_, _) => PlaybackStopped?.Invoke();
+        _stoppedHandler = (_, _) => PlaybackStopped?.Invoke();
+        _output.PlaybackStopped += _stoppedHandler;
     }
 
     public void Play() => _output?.Play();
@@ -45,6 +48,11 @@ public class PlaybackEngine : IDisposable
 
     private void Unload()
     {
+        // Unsubscribe before disposing: WaveOutEvent.Dispose() calls Stop(), which
+        // would otherwise raise a spurious PlaybackStopped when switching tracks.
+        if (_output is not null && _stoppedHandler is not null)
+            _output.PlaybackStopped -= _stoppedHandler;
+        _stoppedHandler = null;
         _output?.Dispose();
         _reader?.Dispose();
         _output = null;
