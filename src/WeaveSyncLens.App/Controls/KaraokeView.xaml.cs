@@ -2,7 +2,6 @@ using System.Collections;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Media;
 using System.Windows.Media.Animation;
 using WeaveSyncLens.App.ViewModels;
 
@@ -53,15 +52,27 @@ public partial class KaraokeView : UserControl
     private void Word_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         if (sender is FrameworkElement { DataContext: WordViewModel word })
+        {
             SeekCommand?.Execute(word);
+            e.Handled = true;
+        }
     }
 
-    private void ScrollToActive()
+    private void ScrollToActive() => ScrollToActiveCore(ActiveIndex);
+
+    private void ScrollToActiveCore(int index)
     {
-        int index = ActiveIndex;
         if (index < 0) return;
         var container = WordsHost.ItemContainerGenerator.ContainerFromIndex(index) as FrameworkElement;
-        if (container is null) return;
+        if (container is null)
+        {
+            // Containers not generated yet (fresh WordsSource); retry after layout.
+            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, new Action(() =>
+            {
+                if (ActiveIndex == index) ScrollToActiveCore(index);
+            }));
+            return;
+        }
 
         // Word's vertical center relative to scrolled content → keep it mid-viewport.
         var transform = container.TransformToAncestor(Scroller);
