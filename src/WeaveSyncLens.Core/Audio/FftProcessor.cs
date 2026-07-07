@@ -10,7 +10,8 @@ public class FftProcessor
 {
     private readonly int _fftLength;
     private readonly int _m; // log2(fftLength)
-    private readonly float[] _window;
+    private readonly float[] _sampleBuffer;
+    private readonly float[] _hannCoefficients;
     private int _pos;
 
     public event Action<float[]>? FftCalculated;
@@ -21,7 +22,10 @@ public class FftProcessor
             throw new ArgumentException("FFT length must be a power of two", nameof(fftLength));
         _fftLength = fftLength;
         _m = (int)Math.Log2(fftLength);
-        _window = new float[fftLength];
+        _sampleBuffer = new float[fftLength];
+        _hannCoefficients = new float[fftLength];
+        for (int i = 0; i < fftLength; i++)
+            _hannCoefficients[i] = (float)FastFourierTransform.HannWindow(i, fftLength);
     }
 
     public void AddSamples(float[] buffer, int offset, int count, int channels)
@@ -31,7 +35,7 @@ public class FftProcessor
             float mono = 0;
             for (int c = 0; c < channels; c++)
                 mono += buffer[offset + i + c];
-            _window[_pos++] = mono / channels;
+            _sampleBuffer[_pos++] = mono / channels;
 
             if (_pos == _fftLength)
             {
@@ -46,7 +50,7 @@ public class FftProcessor
         var complex = new Complex[_fftLength];
         for (int i = 0; i < _fftLength; i++)
         {
-            complex[i].X = (float)(_window[i] * FastFourierTransform.HannWindow(i, _fftLength));
+            complex[i].X = _sampleBuffer[i] * _hannCoefficients[i];
             complex[i].Y = 0;
         }
         FastFourierTransform.FFT(true, _m, complex);
