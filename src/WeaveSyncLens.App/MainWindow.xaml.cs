@@ -19,6 +19,19 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         Vm.PropertyChanged += Vm_PropertyChanged;
+
+        SizeChanged += (_, _) => UpdateTranscriptScaling();
+        Loaded += (_, _) => UpdateTranscriptScaling();
+    }
+
+    /// <summary>Scales the karaoke font with window height and caps the transcript width on
+    /// ultrawide screens. Invoked on load (so it's correct before the first resize) and on
+    /// every SizeChanged.</summary>
+    private void UpdateTranscriptScaling()
+    {
+        Karaoke.WordFontSize = Math.Clamp(ActualHeight * 0.045, 18, 72);
+        // Cap transcript width on ultrawide screens; keep it centered.
+        TranscriptHost.MaxWidth = Math.Max(800, ActualHeight * 1.8);
     }
 
     private void Vm_PropertyChanged(object? sender, PropertyChangedEventArgs e)
