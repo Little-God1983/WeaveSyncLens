@@ -10,28 +10,69 @@ public class VisualizerHost : FrameworkElement
 {
     private float[]? _latestMagnitudes;
     private PlaybackEngine? _engine;
+    private Action<float[]>? _fftHandler;
+    private EventHandler? _renderingHandler;
     private readonly object _lock = new();
 
     public IVisualizer Visualizer { get; set; } = new SpectrumBarsVisualizer();
 
     public VisualizerHost()
     {
+        Loaded += OnLoaded;
+        Unloaded += OnUnloaded;
+    }
+
+    private void OnLoaded(object sender, RoutedEventArgs e)
+    {
         if (!System.ComponentModel.DesignerProperties.GetIsInDesignMode(this))
-            CompositionTarget.Rendering += (_, _) => InvalidateVisual();
+        {
+            _renderingHandler = (_, _) => InvalidateVisual();
+            CompositionTarget.Rendering += _renderingHandler;
+        }
+
+        if (_fftHandler is null && _engine is not null)
+            SubscribeFft();
+    }
+
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        if (_renderingHandler is not null)
+        {
+            CompositionTarget.Rendering -= _renderingHandler;
+            _renderingHandler = null;
+        }
+
+        if (_fftHandler is not null && _engine is not null)
+        {
+            _engine.Fft.FftCalculated -= _fftHandler;
+            _fftHandler = null;
+        }
     }
 
     public void Attach(PlaybackEngine engine)
     {
+        if (_fftHandler is not null && _engine is not null)
+            _engine.Fft.FftCalculated -= _fftHandler;
+
         _engine = engine;
-        engine.Fft.FftCalculated += mags =>
+        SubscribeFft();
+    }
+
+    private void SubscribeFft()
+    {
+        if (_engine is null)
+            return;
+
+        _fftHandler = mags =>
         {
             lock (_lock) _latestMagnitudes = mags; // audio thread; swap reference only
         };
+        _engine.Fft.FftCalculated += _fftHandler;
     }
 
     protected override void OnRender(DrawingContext dc)
     {
-        // Background so the strip is visible even when silent.
+        // Establish render bounds and enable hit-testing.
         dc.DrawRectangle(Brushes.Transparent, null, new Rect(RenderSize));
 
         float[]? mags;
