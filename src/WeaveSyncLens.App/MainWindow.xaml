@@ -64,6 +64,9 @@
             </Button>
             <Button Content="⛶" FontSize="16" Margin="0,8,8,8" Padding="10,2"
                     ToolTip="Fullscreen (F11)" Click="Fullscreen_Click" />
+            <ComboBox ItemsSource="{Binding ModelSizes}" SelectedItem="{Binding SelectedModelSize}"
+                      Margin="0,8,8,8" VerticalAlignment="Center" MinWidth="90"
+                      ToolTip="Whisper model (bigger = more accurate, slower). Used on next transcription." />
             <TextBlock DockPanel.Dock="Right" Margin="8" VerticalAlignment="Center" Foreground="White">
                 <Run Text="{Binding PositionSeconds, StringFormat={}{0:0}s, Mode=OneWay}" />
                 <Run Text=" / " />

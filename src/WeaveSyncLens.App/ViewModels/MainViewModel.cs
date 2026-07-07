@@ -9,13 +9,14 @@ using WeaveSyncLens.Core;
 using WeaveSyncLens.Core.Audio;
 using WeaveSyncLens.Core.Import;
 using WeaveSyncLens.Core.Models;
+using WeaveSyncLens.Core.Settings;
 using WeaveSyncLens.Core.Transcription;
 
 namespace WeaveSyncLens.App.ViewModels;
 
 public partial class MainViewModel : ObservableObject
 {
-    private readonly MediaSessionLoader _loader;
+    private MediaSessionLoader _loader;
     private readonly DispatcherTimer _syncTimer;
     private Transcript? _transcript;
 
@@ -31,16 +32,33 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private double _durationSeconds;
     [ObservableProperty] private bool _isMediaLoaded;
 
+    public IReadOnlyList<WhisperModelSize> ModelSizes { get; } =
+        (WhisperModelSize[])Enum.GetValues(typeof(WhisperModelSize));
+
+    [ObservableProperty] private WhisperModelSize _selectedModelSize;
+
     public MainViewModel()
     {
         FfmpegLocator.Configure(AppContext.BaseDirectory);
+        var settings = AppSettings.Load();
         _loader = new MediaSessionLoader(
             new FfmpegMediaImporter(),
-            new WhisperLocalTranscriber(WhisperModelSize.Base));
+            new WhisperLocalTranscriber(settings.ModelSize));
 
         _syncTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(33) };
         _syncTimer.Tick += (_, _) => SyncTick();
         _syncTimer.Start();
+
+        SelectedModelSize = settings.ModelSize;
+    }
+
+    partial void OnSelectedModelSizeChanged(WhisperModelSize value)
+    {
+        var s = AppSettings.Load();
+        s.ModelSize = value;
+        s.Save();
+        _loader = new MediaSessionLoader(
+            new FfmpegMediaImporter(), new WhisperLocalTranscriber(value));
     }
 
     [RelayCommand]
@@ -57,6 +75,15 @@ public partial class MainViewModel : ObservableObject
         IsBusy = true;
         try
         {
+            bool needsTranscription = WeaveSyncLens.Core.Sidecar.TranscriptSidecarStore.TryLoad(path) is null;
+            if (!FfmpegLocator.IsAvailable && needsTranscription)
+            {
+                MessageBox.Show(
+                    "ffmpeg was not found. Run scripts/setup-ffmpeg.ps1 once (or install ffmpeg on PATH) — it is required to prepare audio for transcription.",
+                    "WeaveSyncLens", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
             StatusText = $"Preparing {Path.GetFileName(path)}…";
             var progress = new Progress<TranscriptionProgress>(p =>
             {
