@@ -67,8 +67,11 @@ public static class TranscriptSidecarStore
         try
         {
             using var doc = JsonDocument.Parse(json);
-            if (!doc.RootElement.TryGetProperty("version", out var versionProp) ||
-                versionProp.GetInt32() != CurrentVersion)
+            if (doc.RootElement.ValueKind != JsonValueKind.Object ||
+                !doc.RootElement.TryGetProperty("version", out var versionProp) ||
+                versionProp.ValueKind != JsonValueKind.Number ||
+                !versionProp.TryGetInt32(out var version) ||
+                version != CurrentVersion)
             {
                 MoveToBackup(path);
                 return null;
