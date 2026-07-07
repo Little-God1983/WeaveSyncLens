@@ -22,8 +22,15 @@ public static class FfmpegLocator
         {
             using var p = Process.Start(new ProcessStartInfo("ffmpeg", "-version")
                 { RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false });
-            p!.WaitForExit(5000);
-            IsAvailable = p.ExitCode == 0;
+            if (p!.WaitForExit(5000))
+            {
+                IsAvailable = p.ExitCode == 0;
+            }
+            else
+            {
+                try { p.Kill(); } catch { }
+                IsAvailable = false;
+            }
         }
         catch { IsAvailable = false; }
     }
@@ -36,9 +43,11 @@ public static class FfmpegLocator
             : "ffmpeg";
         using var p = Process.Start(new ProcessStartInfo(exe, "-y " + arguments)
             { RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false })!;
+        var stdoutTask = p.StandardOutput.ReadToEndAsync();
+        var stderrTask = p.StandardError.ReadToEndAsync();
         await p.WaitForExitAsync();
         if (p.ExitCode != 0)
-            throw new InvalidOperationException($"ffmpeg failed: {await p.StandardError.ReadToEndAsync()}");
+            throw new InvalidOperationException($"ffmpeg failed: {await stderrTask}");
     }
 }
 
