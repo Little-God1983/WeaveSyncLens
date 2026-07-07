@@ -18,11 +18,13 @@ public class MediaSessionLoaderTests : IDisposable
     private sealed class FakeImporter : IMediaImporter
     {
         public int Calls;
+        public string? LastWavPath;
         public Task<string> PrepareForTranscriptionAsync(string mediaPath, CancellationToken ct)
         {
             Calls++;
             var wav = Path.Combine(Path.GetTempPath(), $"fake-{Guid.NewGuid():N}.wav");
             File.WriteAllBytes(wav, new byte[] { 0 });
+            LastWavPath = wav;
             return Task.FromResult(wav);
         }
     }
@@ -40,6 +42,17 @@ public class MediaSessionLoaderTests : IDisposable
         }
     }
 
+    private sealed class ThrowingTranscriber : ITranscriber
+    {
+        public string? LastWavPath;
+        public string ModelName => "throwing";
+        public Task<Transcript> TranscribeAsync(string wavPath, IProgress<TranscriptionProgress>? p, CancellationToken ct)
+        {
+            LastWavPath = wavPath;
+            throw new InvalidOperationException("boom");
+        }
+    }
+
     [Fact]
     public async Task NoSidecar_ImportsTranscribesAndSavesSidecar()
     {
@@ -52,6 +65,7 @@ public class MediaSessionLoaderTests : IDisposable
         Assert.Single(transcript.Words);
         Assert.Equal(1, importer.Calls);
         Assert.Equal(1, transcriber.Calls);
+        Assert.Equal(importer.LastWavPath, transcriber.LastWavPath); // importer path == transcriber path
         Assert.True(File.Exists(TranscriptSidecarStore.GetSidecarPath(MediaPath)));
         Assert.False(File.Exists(transcriber.LastWavPath!)); // temp WAV cleaned up
     }
@@ -70,5 +84,18 @@ public class MediaSessionLoaderTests : IDisposable
         Assert.Equal("cached", transcript.Words[0].Text);
         Assert.Equal(0, importer.Calls);
         Assert.Equal(0, transcriber.Calls);
+    }
+
+    [Fact]
+    public async Task TranscriberThrows_StillDeletesTempWavAndPropagates()
+    {
+        var importer = new FakeImporter();
+        var transcriber = new ThrowingTranscriber();
+        var loader = new MediaSessionLoader(importer, transcriber);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => loader.LoadAsync(MediaPath, null, CancellationToken.None));
+
+        Assert.False(File.Exists(transcriber.LastWavPath!)); // temp WAV cleaned up despite exception
+        Assert.False(File.Exists(TranscriptSidecarStore.GetSidecarPath(MediaPath))); // no sidecar created
     }
 }

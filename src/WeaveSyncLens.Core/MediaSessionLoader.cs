@@ -32,7 +32,9 @@ public class MediaSessionLoader
         }
         finally
         {
-            try { File.Delete(wavPath); } catch (IOException) { }
+            try { File.Delete(wavPath); }
+            catch (IOException) { }
+            catch (UnauthorizedAccessException) { }
         }
     }
 }
