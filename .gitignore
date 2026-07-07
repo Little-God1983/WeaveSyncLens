@@ -2,5 +2,5 @@ bin/
 obj/
 *.user
 third_party/ffmpeg/
-models/
+/models/
 .vs/
