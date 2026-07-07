@@ -58,19 +58,20 @@ public partial class KaraokeView : UserControl
         }
     }
 
-    private void ScrollToActive() => ScrollToActiveCore(ActiveIndex);
+    private void ScrollToActive() => ScrollToActiveCore(ActiveIndex, isRetry: false);
 
-    private void ScrollToActiveCore(int index)
+    private void ScrollToActiveCore(int index, bool isRetry)
     {
         if (index < 0) return;
         var container = WordsHost.ItemContainerGenerator.ContainerFromIndex(index) as FrameworkElement;
         if (container is null)
         {
-            // Containers not generated yet (fresh WordsSource); retry after layout.
-            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, new Action(() =>
-            {
-                if (ActiveIndex == index) ScrollToActiveCore(index);
-            }));
+            // Containers not generated yet (fresh WordsSource); retry once after layout.
+            if (!isRetry)
+                Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, new Action(() =>
+                {
+                    if (ActiveIndex == index) ScrollToActiveCore(index, isRetry: true);
+                }));
             return;
         }
 
