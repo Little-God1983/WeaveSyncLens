@@ -7,9 +7,19 @@ namespace WeaveSyncLens.Core.Tests;
 public class AppSettingsTests : IDisposable
 {
     private readonly string _dir = Directory.CreateTempSubdirectory("wsl-settings").FullName;
+    private readonly string _originalPath;
 
-    public AppSettingsTests() => AppSettings.SettingsPath = Path.Combine(_dir, "settings.json");
-    public void Dispose() => Directory.Delete(_dir, recursive: true);
+    public AppSettingsTests()
+    {
+        _originalPath = AppSettings.SettingsPath;
+        AppSettings.SettingsPath = Path.Combine(_dir, "settings.json");
+    }
+
+    public void Dispose()
+    {
+        AppSettings.SettingsPath = _originalPath;
+        Directory.Delete(_dir, recursive: true);
+    }
 
     [Fact]
     public void Load_NoFile_ReturnsDefaults()

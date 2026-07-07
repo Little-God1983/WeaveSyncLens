@@ -10,6 +10,7 @@ using WeaveSyncLens.Core.Audio;
 using WeaveSyncLens.Core.Import;
 using WeaveSyncLens.Core.Models;
 using WeaveSyncLens.Core.Settings;
+using WeaveSyncLens.Core.Sidecar;
 using WeaveSyncLens.Core.Transcription;
 
 namespace WeaveSyncLens.App.ViewModels;
@@ -49,7 +50,7 @@ public partial class MainViewModel : ObservableObject
         _syncTimer.Tick += (_, _) => SyncTick();
         _syncTimer.Start();
 
-        SelectedModelSize = settings.ModelSize;
+        _selectedModelSize = settings.ModelSize;
     }
 
     partial void OnSelectedModelSizeChanged(WhisperModelSize value)
@@ -75,7 +76,7 @@ public partial class MainViewModel : ObservableObject
         IsBusy = true;
         try
         {
-            bool needsTranscription = WeaveSyncLens.Core.Sidecar.TranscriptSidecarStore.TryLoad(path) is null;
+            bool needsTranscription = TranscriptSidecarStore.TryLoad(path) is null;
             if (!FfmpegLocator.IsAvailable && needsTranscription)
             {
                 MessageBox.Show(
