@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/WeaveSyncLens.App/WeaveSyncLens.App.csproj" />
+    <Project Path="src/WeaveSyncLens.Core/WeaveSyncLens.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/WeaveSyncLens.Core.Tests/WeaveSyncLens.Core.Tests.csproj" />
+  </Folder>
+</Solution>
