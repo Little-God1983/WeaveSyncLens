@@ -5,7 +5,7 @@
         Title="WeaveSyncLens" Height="720" Width="1280"
         Background="#FF101014" AllowDrop="True"
         Drop="Window_Drop" DragOver="Window_DragOver"
-        KeyDown="Window_KeyDown">
+        KeyDown="Window_KeyDown" Closing="Window_Closing">
     <Window.DataContext>
         <vm:MainViewModel />
     </Window.DataContext>
@@ -48,9 +48,9 @@
             </TextBlock>
             <Slider x:Name="SeekSlider" VerticalAlignment="Center" Margin="8,0"
                     Maximum="{Binding DurationSeconds}"
-                    Value="{Binding PositionSeconds, Mode=OneWay}"
-                    Thumb.DragCompleted="SeekSlider_DragCompleted"
-                    PreviewMouseLeftButtonUp="SeekSlider_MouseUp" />
+                    ValueChanged="SeekSlider_ValueChanged"
+                    Thumb.DragStarted="SeekSlider_DragStarted"
+                    Thumb.DragCompleted="SeekSlider_DragCompleted" />
         </DockPanel>
 
         <!-- Busy overlay -->

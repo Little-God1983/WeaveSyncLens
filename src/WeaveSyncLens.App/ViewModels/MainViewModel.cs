@@ -105,6 +105,13 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void SeekToWord(WordViewModel word) => Playback.Seek(word.Start);
 
+    /// <summary>Stops the sync timer and releases audio resources. Call on window close.</summary>
+    public void Shutdown()
+    {
+        _syncTimer.Stop();
+        Playback.Dispose();
+    }
+
     private void SyncTick()
     {
         IsPlaying = Playback.IsPlaying;
