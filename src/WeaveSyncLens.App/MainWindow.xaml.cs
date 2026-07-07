@@ -24,6 +24,9 @@ public partial class MainWindow : Window
     /// <summary>Saved window style before entering fullscreen.</summary>
     private WindowStyle _savedStyle;
 
+    /// <summary>Saved resize mode before entering fullscreen.</summary>
+    private ResizeMode _savedResizeMode;
+
     /// <summary>Timer to auto-hide UI chrome after 3 seconds of inactivity.</summary>
     private readonly System.Windows.Threading.DispatcherTimer _hideUiTimer = new()
     {
@@ -130,25 +133,41 @@ public partial class MainWindow : Window
         else EnterFullscreen();
     }
 
-    /// <summary>Enters fullscreen mode with borderless window covering the taskbar.</summary>
+    /// <summary>Enters fullscreen mode with borderless window covering the taskbar.
+    /// Re-hosts the transport bar as a bottom-aligned overlay spanning all rows so that
+    /// hiding/showing it never reflows the transcript and visualizer rows.</summary>
     private void EnterFullscreen()
     {
         _savedState = WindowState;
         _savedStyle = WindowStyle;
+        _savedResizeMode = ResizeMode;
         WindowStyle = WindowStyle.None;
         ResizeMode = ResizeMode.NoResize;
         WindowState = WindowState.Normal;    // toggle forces WPF to re-measure over the taskbar
         WindowState = WindowState.Maximized;
+
+        // Overlay the transport bar over the content instead of occupying its own row.
+        System.Windows.Controls.Grid.SetRow(TransportBar, 0);
+        System.Windows.Controls.Grid.SetRowSpan(TransportBar, 3);
+        TransportBar.VerticalAlignment = VerticalAlignment.Bottom;
+
         _isFullscreen = true;
         _hideUiTimer.Start();
     }
 
-    /// <summary>Exits fullscreen mode and restores the previous window state and style.</summary>
+    /// <summary>Exits fullscreen mode and restores the previous window state, style,
+    /// resize mode, and transport bar row placement.</summary>
     private void ExitFullscreen()
     {
         WindowStyle = _savedStyle;
-        ResizeMode = ResizeMode.CanResize;
+        ResizeMode = _savedResizeMode;
         WindowState = _savedState;
+
+        // Restore the transport bar to its own layout row.
+        System.Windows.Controls.Grid.SetRow(TransportBar, 2);
+        System.Windows.Controls.Grid.SetRowSpan(TransportBar, 1);
+        TransportBar.VerticalAlignment = VerticalAlignment.Stretch;
+
         _isFullscreen = false;
         _hideUiTimer.Stop();
         ShowChrome();
@@ -169,14 +188,21 @@ public partial class MainWindow : Window
         Cursor = System.Windows.Input.Cursors.None;
     }
 
-    /// <summary>Helper to check if a DependencyObject is a descendant of a parent element.</summary>
+    /// <summary>Helper to check if a DependencyObject is a descendant of a parent element.
+    /// Handles content elements (e.g. a Run inside a TextBlock), which are not Visuals and
+    /// would make VisualTreeHelper.GetParent throw ArgumentException.</summary>
     private static bool IsDescendantOf(DependencyObject child, DependencyObject parent)
     {
         var current = child;
         while (current != null)
         {
             if (current == parent) return true;
-            current = System.Windows.Media.VisualTreeHelper.GetParent(current);
+            if (current is System.Windows.Media.Visual or System.Windows.Media.Media3D.Visual3D)
+                current = System.Windows.Media.VisualTreeHelper.GetParent(current);
+            else if (current is FrameworkContentElement fce)
+                current = fce.Parent;
+            else
+                break;
         }
         return false;
     }
