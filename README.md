@@ -11,7 +11,9 @@ Windows, WPF, fully offline.
 3. Run: `dotnet run --project src/WeaveSyncLens.App`
 
 First transcription downloads the selected Whisper model (~75 MB tiny … ~3 GB large-v3)
-into `models/`. Settings and cached transcripts are stored at `%APPDATA%\WeaveSyncLens\settings.json` and as `<file>.transcript.json` sidecars next to media files, respectively.
+into `models/` under the app root (the repo root when running via `dotnet run`; the folder
+containing the executable in a published build) — same convention as `third_party/ffmpeg/`.
+Settings and cached transcripts are stored at `%APPDATA%\WeaveSyncLens\settings.json` and as `<file>.transcript.json` sidecars next to media files, respectively.
 
 ## Usage
 

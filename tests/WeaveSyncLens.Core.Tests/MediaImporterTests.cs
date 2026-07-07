@@ -16,7 +16,7 @@ public class MediaImporterTests
     [SkippableFact]
     public async Task Mp3_ConvertsTo16kMonoWav()
     {
-        FfmpegLocator.Configure(FindRepoRoot());
+        FfmpegLocator.Configure(AppRoot.Resolve());
         Skip.IfNot(FfmpegLocator.IsAvailable, "ffmpeg not installed — run scripts/setup-ffmpeg.ps1");
 
         // Generate a 2s test tone MP3 with ffmpeg itself.
@@ -38,13 +38,5 @@ public class MediaImporterTests
             File.Delete(wav);
         }
         finally { File.Delete(mp3); }
-    }
-
-    private static string FindRepoRoot()
-    {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null && !File.Exists(Path.Combine(dir.FullName, "WeaveSyncLens.sln")))
-            dir = dir.Parent;
-        return dir?.FullName ?? AppContext.BaseDirectory;
     }
 }

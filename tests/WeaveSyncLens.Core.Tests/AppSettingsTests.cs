@@ -48,4 +48,14 @@ public class AppSettingsTests : IDisposable
         File.WriteAllText(AppSettings.SettingsPath, "{broken");
         Assert.Equal(WhisperModelSize.Base, AppSettings.Load().ModelSize);
     }
+
+    [Fact]
+    public void Load_LockedFile_ReturnsDefaults()
+    {
+        File.WriteAllText(AppSettings.SettingsPath, "{}");
+        using var handle = new FileStream(
+            AppSettings.SettingsPath, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+
+        Assert.Equal(WhisperModelSize.Base, AppSettings.Load().ModelSize);
+    }
 }

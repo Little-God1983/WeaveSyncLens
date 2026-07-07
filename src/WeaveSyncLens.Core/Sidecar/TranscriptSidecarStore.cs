@@ -57,20 +57,42 @@ public static class TranscriptSidecarStore
         var path = GetSidecarPath(mediaPath);
         if (!File.Exists(path)) return null;
 
-        SidecarDto? dto;
+        var json = File.ReadAllText(path);
+
+        // Check the version field before attempting full deserialization: a future-version
+        // sidecar may contain enum values (e.g. Flags) that this build doesn't know about,
+        // which would throw during full-DTO binding. Reading the version first lets us
+        // detect and quarantine forward-incompatible files without ever attempting (and
+        // failing) a full parse that could otherwise be mistaken for corruption.
         try
         {
-            dto = JsonSerializer.Deserialize<SidecarDto>(File.ReadAllText(path), JsonOptions);
+            using var doc = JsonDocument.Parse(json);
+            if (!doc.RootElement.TryGetProperty("version", out var versionProp) ||
+                versionProp.GetInt32() != CurrentVersion)
+            {
+                MoveToBackup(path);
+                return null;
+            }
         }
         catch (JsonException)
         {
+            MoveToBackup(path);
             return null;
         }
-        if (dto is null) return null;
 
-        if (dto.Version != CurrentVersion)
+        SidecarDto? dto;
+        try
         {
-            File.Move(path, path + ".bak", overwrite: true);
+            dto = JsonSerializer.Deserialize<SidecarDto>(json, JsonOptions);
+        }
+        catch (JsonException)
+        {
+            MoveToBackup(path);
+            return null;
+        }
+        if (dto is null)
+        {
+            MoveToBackup(path);
             return null;
         }
 
@@ -78,4 +100,6 @@ public static class TranscriptSidecarStore
             .Select(w => new Word(w.Text, w.Start, w.End, w.Flags))
             .ToList());
     }
+
+    private static void MoveToBackup(string path) => File.Move(path, path + ".bak", overwrite: true);
 }

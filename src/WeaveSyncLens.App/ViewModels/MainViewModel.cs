@@ -40,7 +40,7 @@ public partial class MainViewModel : ObservableObject
 
     public MainViewModel()
     {
-        FfmpegLocator.Configure(AppContext.BaseDirectory);
+        FfmpegLocator.Configure(AppRoot.Resolve());
         var settings = AppSettings.Load();
         _loader = new MediaSessionLoader(
             new FfmpegMediaImporter(),

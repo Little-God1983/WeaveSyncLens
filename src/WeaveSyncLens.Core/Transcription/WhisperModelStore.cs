@@ -6,7 +6,7 @@ namespace WeaveSyncLens.Core.Transcription;
 public static class WhisperModelStore
 {
     public static string ModelsDirectory { get; set; } =
-        Path.Combine(AppContext.BaseDirectory, "models");
+        Path.Combine(AppRoot.Resolve(), "models");
 
     public static GgmlType ToGgmlType(WhisperModelSize size) => size switch
     {

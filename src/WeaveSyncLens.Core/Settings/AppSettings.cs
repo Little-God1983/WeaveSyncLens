@@ -30,6 +30,8 @@ public class AppSettings
                     File.ReadAllText(SettingsPath), JsonOptions) ?? new AppSettings();
         }
         catch (JsonException) { }
+        catch (IOException) { }
+        catch (UnauthorizedAccessException) { }
         return new AppSettings();
     }
 

@@ -50,9 +50,26 @@ public class TranscriptSidecarStoreTests : IDisposable
     }
 
     [Fact]
-    public void TryLoad_CorruptJson_ReturnsNull()
+    public void TryLoad_CorruptJson_ReturnsNullAndMovesToBackup()
     {
-        File.WriteAllText(TranscriptSidecarStore.GetSidecarPath(MediaPath), "not json {");
+        var sidecar = TranscriptSidecarStore.GetSidecarPath(MediaPath);
+        File.WriteAllText(sidecar, "not json {");
+
         Assert.Null(TranscriptSidecarStore.TryLoad(MediaPath));
+        Assert.False(File.Exists(sidecar));
+        Assert.True(File.Exists(sidecar + ".bak"));
+    }
+
+    [Fact]
+    public void TryLoad_FutureVersionWithUnknownFlag_ReturnsNullBeforeDeserializationFailsAndMovesToBackup()
+    {
+        var sidecar = TranscriptSidecarStore.GetSidecarPath(MediaPath);
+        File.WriteAllText(sidecar, """
+            {"version": 2, "words": [{"text": "hi", "start": 0.0, "end": 0.5, "flags": "SomeFutureFlag"}]}
+            """);
+
+        Assert.Null(TranscriptSidecarStore.TryLoad(MediaPath));
+        Assert.False(File.Exists(sidecar));
+        Assert.True(File.Exists(sidecar + ".bak"));
     }
 }
